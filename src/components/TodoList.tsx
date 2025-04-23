@@ -8,6 +8,7 @@ import { Plus, Trash2, LogOut } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/components/ui/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 
 interface Todo {
   id: string;
@@ -19,6 +20,7 @@ const TodoList = () => {
   const [newTodo, setNewTodo] = useState('');
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const { data: todos = [], isLoading } = useQuery({
     queryKey: ['todos'],
@@ -35,9 +37,11 @@ const TodoList = () => {
 
   const addTodoMutation = useMutation({
     mutationFn: async (text: string) => {
+      if (!user) throw new Error("User must be logged in");
+      
       const { error } = await supabase
         .from('todos')
-        .insert([{ text }]);
+        .insert([{ text, user_id: user.id }]);
       if (error) throw error;
     },
     onSuccess: () => {
